@@ -1,0 +1,35 @@
+import pandas as pd
+from statsmodels.tsa.arima.model import ARIMA
+
+# Load the data from CSV file
+data = pd.read_csv('data.csv')
+
+# Set the 'Material' column as the index
+data.set_index('Material', inplace=True)
+
+# Select the columns containing demand data (January 2021 to December 2022)
+demand_data = data.loc[:, 'Jan 2021':'Dec 2022']
+
+# Transpose the data to have materials as rows and months as columns
+demand_data = demand_data.transpose()
+
+# Perform time series analysis for each material
+forecasts = []
+
+for material in demand_data.columns:
+    material_data = demand_data[material]
+
+    # Fit the ARIMA model
+    model = ARIMA(material_data, order=(1, 1, 1))
+    model_fit = model.fit()
+
+    # Forecast the next 24 months
+    forecast = model_fit.predict(start=len(material_data), end=len(material_data) + 23)
+
+    # Append the forecasted values to the forecasts list
+    forecasts.append((material, forecast))
+
+# Display the forecasts
+for material, forecast in forecasts:
+    print(f"Material: {material}")
+    print(f"Forecast: {forecast}\n")
