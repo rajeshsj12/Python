@@ -1,0 +1,42 @@
+import pandas as pd
+from statsmodels.tsa.seasonal import STL
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+# Load the data from CSV file
+data = pd.read_csv('data.csv')
+
+# Set the 'Material' column as the index
+data.set_index('Material', inplace=True)
+
+# Select the columns containing demand data (January 2021 to December 2022)
+demand_data = data.loc[:, 'Jan 2021':'Dec 2022']
+
+# Transpose the data to have materials as rows and months as columns
+demand_data = demand_data.transpose()
+
+# Perform time series analysis for each material
+forecasts = []
+
+for material in demand_data.columns:
+    material_data = demand_data[material]
+
+    # Step 1: Decomposition
+    decomposition = STL(material_data, seasonal=12)
+    decomposed_result = decomposition.fit()
+
+    # Step 2: Forecasting Model (Exponential Smoothing)
+    model = ExponentialSmoothing(decomposed_result.resid, seasonal_periods=12)
+    model_fit = model.fit()
+
+    # Step 3: Forecasting
+    forecast = model_fit.forecast(24)  # Forecasting for 24 months
+
+    # Append the forecasted values to the forecasts list
+    forecasts.append((material, forecast))
+
+# Display the forecasts
+for material, forecast in forecasts:
+    print(f"Material: {material}")
+    print(f"Forecast: {forecast}\n")
+
+
